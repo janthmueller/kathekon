@@ -14,7 +14,7 @@ def read_long_description():
         with open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
             return fh.read()
     except FileNotFoundError:
-        return "kathekon is a Python library and CLI tool for fetching Stoic quotes and with interpretations."
+        return "kathekon is a Python library and CLI tool for fetching Stoic quotes with interpretations."
 
 
 setup(
@@ -23,7 +23,7 @@ setup(
     packages=find_packages(exclude=["tests"]),
     author="Jan T. Müller",
     author_email="mail@jantmueller.com",
-    description="kathekon is a Python library and CLI tool for fetching Stoic quotes and with interpretations.",
+    description="kathekon is a Python library and CLI tool for fetching Stoic quotes with interpretations.",
     long_description=read_long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/janthmueller/kathekon",
