@@ -14,12 +14,13 @@
 - **CLI Tool**:
   - Display quotes in the terminal with elegant formatting.
   - Update files (e.g., `README.md`) with quotes and their interpretations.
+  - Customize quote fetching using multiple filtering options.
 
 - **OpenAI Integration** *(Optional)*:
   - Generate thoughtful interpretations of quotes using OpenAI's GPT models.
 
 - **Library Integration**:
-  - Use `Quotes` as a Python library to integrate Stoic philosophy into your projects.
+  - Use `Quotes` from the library to integrate Stoic philosophy into your projects.
 
 ---
 
@@ -49,7 +50,7 @@ After installation, you can use the CLI commands `kathekon` or `stoic-quote`.
 #### Display a Random Quote
 
 ```bash
-kathekon random --author "Marcus Aurelius"
+kathekon --author "Marcus Aurelius"
 ```
 
 #### Display Today’s Quote
@@ -83,21 +84,41 @@ kathekon readme random --file README.md --author "Marcus Aurelius"
 kathekon readme daily --file README.md
 ```
 
-### Example of a Resulting README
+### Available CLI Arguments
 
-```markdown
-<!--START_SECTION:quote-text-->
-“Waste no more time arguing about what a good man should be. Be one.”
-<!--END_SECTION:quote-text-->
+#### General Options
+| Argument                     | Description | Default |
+|------------------------------|-------------|---------|
+| `--id ID`                     | Fetch a quote by its unique ID | None |
+| `--author "Author Name"`       | Fetch a random quote by the specified author | None |
+| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `gpt+fallback`, `db+fixed` | `db` |
 
-<!--START_SECTION:quote-author-->
-Marcus Aurelius
-<!--END_SECTION:quote-author-->
+#### Interpretation Methods Explained
+| Method                 | Description |
+|------------------------|-------------|
+| `gpt`                  | Generate a quote interpretation using OpenAI's GPT models. Requires an API key. |
+| `db`                   | Fetch an (random) existing interpretation from the database. |
+| `gpt+fallback`         | Try generating an interpretation using GPT. If unavailable, fall back to a database interpretation. |
+| `db+fixed`             | Use a fixed interpretation from the database, ensuring consistency for daily quotes. |
 
-<!--START_SECTION:quote-interpretation-->
-When we spend too much time debating the meaning of virtue, we risk delaying its practice. This quote calls for immediate action: embody the qualities you admire in others and strive to be the person you aspire to be. In modern life, this might mean taking decisive steps to act with kindness and integrity rather than theorizing endlessly about morality.
-<!--END_SECTION:quote-interpretation-->
-```
+#### `daily` Command
+| Argument                     | Description | Default |
+|------------------------------|-------------|---------|
+| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `db+fixed`, `gpt+fallback` | `db+fixed` |
+
+#### `readme random` Command
+| Argument                     | Description | Default |
+|------------------------------|-------------|---------|
+| `--file FILE`                 | Path to the file to update | `README.md` |
+| `--id ID`                     | Fetch a quote by its unique ID | None |
+| `--author "Author Name"`       | Fetch a random quote by the specified author | None |
+| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `gpt+fallback` | `db` |
+
+#### `readme daily` Command
+| Argument                     | Description | Default |
+|------------------------------|-------------|---------|
+| `--file FILE`                 | Path to the file to update | `README.md` |
+| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `db+fixed`, `gpt+fallback` | `db+fixed` |
 
 ---
 
@@ -160,4 +181,3 @@ Contributions are welcome! Feel free to submit issues or pull requests on the [G
 ## License
 
 `kathekon` is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
