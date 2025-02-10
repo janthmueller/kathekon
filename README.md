@@ -1,5 +1,9 @@
 # kathekon
 
+[![PyPI Latest Release](https://img.shields.io/pypi/v/kathekon.svg)](https://pypi.org/project/kathekon/)
+[![Pepy Total Downloads](https://img.shields.io/pepy/dt/kathekon)](https://pepy.tech/project/kathekon)
+[![GitHub License](https://img.shields.io/github/license/janthmueller/kathekon)](https://github.com/janthmueller/kathekon/blob/main/LICENSE)
+
 **kathekon** is a Python library and CLI tool for exploring Stoic philosophy through curated quotes. It allows you to fetch random or daily quotes, insert quotes into files like `README.md`, and generate thoughtful interpretations using OpenAI.
 
 ---

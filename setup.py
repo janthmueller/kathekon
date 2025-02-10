@@ -46,10 +46,10 @@ setup(
         "Programming Language :: Python :: 3.11",
     ],
     python_requires=">=3.7",
-    install_requires=[],
+    install_requires=["rich"],
     extras_require={
-        "openai": ["openai>=1.57.0"],
-        "all": ["openai>=1.57.0"],
+        "openai": ["rich", "openai>=1.57.0"],
+        "all": ["rich", "openai>=1.57.0"],
     },
     include_package_data=True,  # Include additional files
     package_data={
