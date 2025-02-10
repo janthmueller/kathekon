@@ -7,7 +7,7 @@ import random
 from datetime import datetime
 from dataclasses import dataclass, field
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -21,7 +21,7 @@ try:
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
-    logger.info("Dependency 'openai' is not installed. OpenAI functionality will be disabled.")
+    logger.debug("Dependency 'openai' is not installed. OpenAI functionality will be disabled.")
 
 class QuoteNotFoundError(Exception):
     """Raised when no quote is found in the database for the given criteria."""
