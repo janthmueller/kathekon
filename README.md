@@ -182,6 +182,12 @@ Contributions are welcome! Feel free to submit issues or pull requests on the [G
 
 ---
 
+## Acknowledgements
+
+The Stoic quotes used in this project are sourced from [benhoneywill/stoic-quotes](https://github.com/benhoneywill/stoic-quotes).
+
+---
+
 ## License
 
 `kathekon` is licensed under the MIT License. See [LICENSE](LICENSE) for details.

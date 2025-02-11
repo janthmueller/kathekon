@@ -7,7 +7,7 @@ import random
 from datetime import datetime
 from dataclasses import dataclass, field
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
