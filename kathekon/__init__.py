@@ -7,7 +7,7 @@ import random
 from datetime import datetime
 from dataclasses import dataclass, field
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -82,7 +82,7 @@ class Quotes:
         self,
         quote_id: Optional[str] = None,
         author: Optional[str] = None,
-        interpretation: Optional[str] = None
+        method: Optional[str] = None
     ) -> Quote:
         """
         Fetches and returns a single quote as a Quote object.
@@ -92,7 +92,7 @@ class Quotes:
                                     Overrides the 'author' parameter if both are provided.
         - author (Optional[str]): If provided, fetches a random quote by this author.
                                   Ignored if 'quote_id' is specified.
-        - interpretation (Optional[str]): Specifies how to handle interpretations for the quote. Options are:
+        - method (Optional[str]): Specifies how to handle interpretations for the quote. Options are:
             - 'gpt': Generate a new interpretation using GPT.
             - 'db': Fetch a random interpretation from the database.
             - 'gpt+fallback': Attempt to generate an interpretation using GPT. If GPT fails, fallback to a random database interpretation.
@@ -102,15 +102,15 @@ class Quotes:
         - Quote: A Quote object containing the text, author, and optionally an interpretation.
 
         Raises:
-        - ValueError: If the 'interpretation' argument is invalid.
+        - ValueError: If the 'method' argument is invalid.
         - RuntimeError: If 'gpt' or 'gpt+fallback' is specified but OpenAI functionality is not enabled.
         - QuoteNotFoundError: If no quote is found based on the provided 'quote_id' or 'author'.
         - InterpretationNotFoundError: If no interpretations are found for the quote when 'db' or 'gpt+fallback' is used.
         """
-        if interpretation not in {None, "gpt", "db", "gpt+fallback"}:
-            raise ValueError("Interpretation must be 'gpt', 'db', 'gpt+fallback' or None.")
+        if method not in {None, "gpt", "db", "gpt+fallback"}:
+            raise ValueError("method must be 'gpt', 'db', 'gpt+fallback' or None.")
 
-        if interpretation in {"gpt", "gpt+fallback"} and not self.openai_enabled:
+        if method in {"gpt", "gpt+fallback"} and not self.openai_enabled:
             raise RuntimeError("OpenAI functionality is not enabled. Install the 'openai' package and provide an API key.")
 
         with self.connection as conn:
@@ -153,15 +153,15 @@ class Quotes:
             quote = Quote(text=row[1], author=row[2])
             fallback = False
             # Handle interpretation
-            if interpretation == "gpt":
+            if method == "gpt":
                 quote.interpretation = self._generate_interpretation(quote.text, quote.author)
-            elif interpretation == "gpt+fallback":
+            elif method == "gpt+fallback":
                 try:
                     quote.interpretation = self._generate_interpretation(quote.text, quote.author)
                 except Exception as e:
                     logger.debug("Error generating interpretation via GPT. Falling back to database.")
                     fallback = True
-            elif interpretation == "db" or fallback:
+            elif method == "db" or fallback:
                 cursor.execute("""
                     SELECT interpretation FROM interpretations
                     WHERE quote_id = ?
@@ -179,7 +179,7 @@ class Quotes:
     def get_quotes(
         self,
         author: Optional[str] = None,
-        interpretation: Optional[str] = None,
+        method: Optional[str] = None,
         limit: Optional[int] = None,
         random: bool = True,
     ) -> Generator[Quote, None, None]:
@@ -188,7 +188,7 @@ class Quotes:
 
         Parameters:
         - author (Optional[str]): Filters quotes by the specified author's name. If None, all authors are included.
-        - interpretation (Optional[str]): Specifies how interpretations for the quotes are handled. Options are:
+        - method (Optional[str]): Specifies how interpretations for the quotes are handled. Options are:
             - 'gpt': Generate a new interpretation using GPT.
             - 'db': Fetch a random interpretation from the database.
             - 'gpt+fallback': Attempt to generate an interpretation using GPT. If GPT fails, fallback to a random database interpretation.
@@ -200,15 +200,15 @@ class Quotes:
         - Quote: A Quote object containing the text, author, and optionally an interpretation.
 
         Raises:
-        - ValueError: If the interpretation argument is invalid.
+        - ValueError: If the method argument is invalid.
         - RuntimeError: If 'gpt' or 'gpt+fallback' is used but OpenAI functionality is not enabled.
         - InterpretationNotFoundError: If an interpretation is requested but none exists for a quote.
         """
 
-        if interpretation not in {None, "gpt", "db", "gpt+fallback"}:
-            raise ValueError("Interpretation must be 'gpt', 'db', 'gpt+fallback' or None.")
+        if method not in {None, "gpt", "db", "gpt+fallback"}:
+            raise ValueError("method must be 'gpt', 'db', 'gpt+fallback' or None.")
 
-        if interpretation in {"gpt", "gpt+fallback"} and not self.openai_enabled:
+        if method in {"gpt", "gpt+fallback"} and not self.openai_enabled:
             raise RuntimeError("OpenAI functionality is not enabled. Install the 'openai' package and provide an API key.")
 
         with self.connection as conn:
@@ -234,15 +234,15 @@ class Quotes:
                 quote = Quote(text=row[1], author=row[2])
                 fallback = False
                 # Fetch interpretation if required
-                if interpretation == "gpt":
+                if method == "gpt":
                     quote.interpretation = self._generate_interpretation(quote.text, quote.author)
-                elif interpretation == "gpt+fallback":
+                elif method == "gpt+fallback":
                     try:
                         quote.interpretation = self._generate_interpretation(quote.text, quote.author)
                     except Exception as e:
                         logger.debug("Error generating interpretation via GPT. Falling back to database.")
                         fallback = True
-                elif interpretation == "db" or fallback:
+                elif method == "db" or fallback:
                     interpretation_cursor.execute(
                         """
                         SELECT interpretation FROM interpretations
@@ -287,16 +287,16 @@ class Quotes:
         )
         return response.choices[0].message.content.strip()
 
-    def get_daily_quote(self, interpretation: Optional[str] = "db+fixed") -> Quote:
+    def get_daily_quote(self, method: Optional[str] = "db+fixed") -> Quote:
         """
         Fetches a consistent quote for the current day of the year based on unique random IDs.
 
         This method uses a deterministic random sampling mechanism to select a quote
         corresponding to the current day of the year. It optionally includes an interpretation
-        based on the specified mode.
+        based on the specified method.
 
         Parameters:
-        - interpretation (Optional[str]): Specifies how interpretations for the quote are handled. Options are:
+        - method (Optional[str]): Specifies how interpretations for the quote are handled. Options are:
             - 'gpt': Generate a new interpretation using GPT.
             - 'db': Fetch a random interpretation from the database.
             - 'db+fixed': Fetch a deterministic interpretation using the current day of the year.
@@ -307,7 +307,7 @@ class Quotes:
         - Quote: A Quote object containing the text, author, and optionally an interpretation.
 
         Raises:
-        - ValueError: If the 'interpretation' argument is invalid, the database is empty, or no quote is found for the selected ID.
+        - ValueError: If the 'method' argument is invalid, the database is empty, or no quote is found for the selected ID.
         - RuntimeError: If 'gpt' or 'gpt+fallback' is specified but OpenAI functionality is not enabled.
         - InterpretationNotFoundError: If no interpretations are found for the quote when 'db', 'db+fixed', or 'gpt+fallback' is used.
 
@@ -321,10 +321,10 @@ class Quotes:
         day_of_year = today.timetuple().tm_yday  # Day of the year (1-366)
 
         # Validate the interpretation argument
-        if interpretation not in {None, "gpt", "db", "db+fixed", "gpt+fallback"}:
-            raise ValueError("Interpretation must be 'gpt', 'db', 'db+fixed', 'gpt+fallback', or None.")
+        if method not in {None, "gpt", "db", "db+fixed", "gpt+fallback"}:
+            raise ValueError("method must be 'gpt', 'db', 'db+fixed', 'gpt+fallback', or None.")
 
-        if interpretation in {"gpt", "gpt+fallback"} and not self.openai_enabled:
+        if method in {"gpt", "gpt+fallback"} and not self.openai_enabled:
             raise RuntimeError("OpenAI functionality is not enabled. Install the 'openai' package and provide an API key.")
 
         # Get the maximum ID from the database
@@ -356,16 +356,16 @@ class Quotes:
         quote = Quote(text=row[1], author=row[2])
 
         # Handle interpretation
-        if interpretation == "gpt":
+        if method == "gpt":
             quote.interpretation = self._generate_interpretation(quote.text, quote.author)
-        elif interpretation == "gpt+fallback":
+        elif method == "gpt+fallback":
             try:
                 quote.interpretation = self._generate_interpretation(quote.text, quote.author)
             except Exception as e:
                 logger.debug("Error generating interpretation via GPT. Falling back to database.")
-                interpretation = "db"  # Fall back to DB handling
+                method = "db"  # Fall back to DB handling
 
-        if interpretation == "db":
+        if method == "db":
             # Random database-based interpretation
             with self.connection as conn:
                 cursor.execute(
@@ -381,7 +381,7 @@ class Quotes:
                 if not interpretation_row:
                     raise InterpretationNotFoundError(f"No interpretations found for quote ID {row[0]}.")
                 quote.interpretation = interpretation_row[0]
-        elif interpretation == "db+fixed":
+        elif method == "db+fixed":
             # Deterministic database-based interpretation
             with self.connection as conn:
                 cursor.execute(

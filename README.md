@@ -90,39 +90,57 @@ kathekon readme daily --file README.md
 
 ### Available CLI Arguments
 
-#### General Options
-| Argument                     | Description | Default |
-|------------------------------|-------------|---------|
-| `--id ID`                     | Fetch a quote by its unique ID | None |
-| `--author "Author Name"`       | Fetch a random quote by the specified author | None |
-| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `gpt+fallback`, `db+fixed` | `db` |
+#### General Options (for default/random quote behavior)
+These options can be used when **running the CLI without a subcommand**, which will display a **random quote**.
 
-#### Interpretation Methods Explained
-| Method                 | Description |
-|------------------------|-------------|
-| `gpt`                  | Generate a quote interpretation using OpenAI's GPT models. Requires an API key. |
-| `db`                   | Fetch an (random) existing interpretation from the database. |
-| `gpt+fallback`         | Try generating an interpretation using GPT. If unavailable, fall back to a database interpretation. |
-| `db+fixed`             | Use a fixed interpretation from the database, ensuring consistency for daily quotes. |
+| Argument                      | Short | Description                                                                                              | Default |
+|-------------------------------|-------|----------------------------------------------------------------------------------------------------------|---------|
+| `--id ID`                     | `-i`  | Fetch a quote by its unique ID. If omitted, a **random quote** is used.                                  | None    |
+| `--author "Author Name"`       | `-a`  | Fetch a random quote by the specified author. If omitted, **a random author is chosen**.                 | None    |
+| `--method METHOD`              | `-m`  | Choose method to fetch or generate interpretation: `gpt`, `db`, `gpt+fallback`                          | `db`    |
+| `--list-authors`               | `-l`  | List all available authors and exit.                                                                     | -       |
+| `--version`                    | `-v`  | Show version and exit.                                                                                    | -       |
+
+---
+
+#### Method Choices Explained
+| Method         | Description                                                                                          |
+|----------------|------------------------------------------------------------------------------------------------------|
+| `gpt`          | Generate a quote interpretation using OpenAI's GPT models. Requires an API key.                     |
+| `db`           | Fetch a (random) existing interpretation from the database.                                          |
+| `gpt+fallback` | Try generating an interpretation using GPT. If unavailable, fall back to a database interpretation. |
+| `db+fixed`     | Use a fixed interpretation from the database, ensuring consistency for `daily` quotes.                 |
+
+---
 
 #### `daily` Command
-| Argument                     | Description | Default |
-|------------------------------|-------------|---------|
-| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `db+fixed`, `gpt+fallback` | `db+fixed` |
+Displays **today’s Stoic quote**.
+
+| Argument                     | Short | Description                                                                                              | Default    |
+|------------------------------|-------|----------------------------------------------------------------------------------------------------------|------------|
+| `--method METHOD`             | `-m`  | Choose method to fetch or generate interpretation: `gpt`, `db`, `db+fixed`, `gpt+fallback`              | `db+fixed` |
+
+---
 
 #### `readme random` Command
-| Argument                     | Description | Default |
-|------------------------------|-------------|---------|
-| `--file FILE`                 | Path to the file to update | `README.md` |
-| `--id ID`                     | Fetch a quote by its unique ID | None |
-| `--author "Author Name"`       | Fetch a random quote by the specified author | None |
-| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `gpt+fallback` | `db` |
+Updates the specified file with a **random quote**.
+
+| Argument                     | Short | Description                                                                                              | Default    |
+|------------------------------|-------|----------------------------------------------------------------------------------------------------------|------------|
+| `--file FILE`                 | `-f`  | Path to the file to update                                                                                | `README.md` |
+| `--id ID`                     | `-i`  | Fetch a quote by its unique ID. If omitted, a **random quote** is used.                                  | None       |
+| `--author "Author Name"`       | `-a`  | Fetch a random quote by the specified author. If omitted, **a random author is chosen**.                 | None       |
+| `--method METHOD`             | `-m`  | Choose method to fetch or generate interpretation: `gpt`, `db`, `gpt+fallback`                          | `db`       |
+
+---
 
 #### `readme daily` Command
-| Argument                     | Description | Default |
-|------------------------------|-------------|---------|
-| `--file FILE`                 | Path to the file to update | `README.md` |
-| `--interpretation INTERPRETATION` | Choose method to fetch or generate interpretation: `gpt`, `db`, `db+fixed`, `gpt+fallback` | `db+fixed` |
+Updates the specified file with **today’s Stoic quote**.
+
+| Argument                     | Short | Description                                                                                              | Default    |
+|------------------------------|-------|----------------------------------------------------------------------------------------------------------|------------|
+| `--file FILE`                 | `-f`  | Path to the file to update                                                                                | `README.md` |
+| `--method METHOD`             | `-m`  | Choose method to fetch or generate interpretation: `gpt`, `db`, `db+fixed`, `gpt+fallback`              | `db+fixed` |
 
 ---
 
@@ -139,7 +157,7 @@ print(f"{quote.text} — {quote.author}")
 
 ### Generate Today’s Quote
 ```python
-daily_quote = quotes.get_daily_quote(interpretation="gpt+fallback")
+daily_quote = quotes.get_daily_quote(method="gpt+fallback")
 print(f"{daily_quote.text} — {daily_quote.author}")
 print(f"Interpretation: {daily_quote.interpretation}")
 ```
@@ -157,7 +175,7 @@ for quote in quotes.get_quotes(limit=5):
     print(f"{quote.text} — {quote.author}")
 
 # Fetch 3 quotes by Seneca with interpretations from the database
-for quote in quotes.get_quotes(author="Seneca", limit=3, interpretation="db"):
+for quote in quotes.get_quotes(author="Seneca", limit=3, method="db"):
     print(f"{quote.text} — {quote.author}")
     print(f"Interpretation: {quote.interpretation}")
 ```
