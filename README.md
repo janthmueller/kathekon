@@ -68,6 +68,9 @@ kathekon daily
 Ensure your `README.md` includes markers like this:
 
 ```markdown
+<!--START_SECTION:current-date-->
+<!--END_SECTION:current-date-->
+
 <!--START_SECTION:quote-text-->
 <!--END_SECTION:quote-text-->
 
