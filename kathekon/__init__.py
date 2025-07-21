@@ -1,53 +1,64 @@
-import sqlite3
-from typing import Generator, Optional
-import os
-from importlib.resources import files, as_file
 import logging
+import os
 import random
-from datetime import datetime
+import sqlite3
 from dataclasses import dataclass, field
+from datetime import datetime
+from importlib.resources import as_file, files
+from typing import Generator, Optional
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
-    logger.debug("Dependency 'openai' is not installed. OpenAI functionality will be disabled.")
+    logger.debug(
+        "Dependency 'openai' is not installed. OpenAI functionality will be disabled."
+    )
+
 
 class QuoteNotFoundError(Exception):
     """Raised when no quote is found in the database for the given criteria."""
 
+
 class InterpretationNotFoundError(Exception):
     """Raised when no interpretation is found in the database for a given quote."""
+
 
 @dataclass
 class Quote:
     """
     Represents a single quote with its text, author, and optional interpretation.
     """
+
     text: str
     author: str
     interpretation: Optional[str] = field(default=None)
+
 
 class Quotes:
     """
     A database manager for quotes, with functionality for fetching and filtering quotes
     and generating interpretations.
     """
+
     def __init__(self):
         # Dynamically locate the database file relative to the package
         package_name = __package__  # Get the current module's package name
         if not package_name:
-            raise ValueError("Cannot determine the package name for locating resources.")
+            raise ValueError(
+                "Cannot determine the package name for locating resources."
+            )
 
         # Use importlib.resources to locate the database file
         with as_file(files(package_name) / "data" / "quotes.db") as default_db_path:
@@ -69,20 +80,20 @@ class Quotes:
         self.connection.close()
 
     def get_authors(self) -> list[str]:
-            """
-            Returns a list of all distinct authors in the database.
-            """
-            with self.connection as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT DISTINCT author FROM quotes ORDER BY author ASC")
-                authors = [row[0] for row in cursor.fetchall()]
-                return authors
+        """
+        Returns a list of all distinct authors in the database.
+        """
+        with self.connection as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT author FROM quotes ORDER BY author ASC")
+            authors = [row[0] for row in cursor.fetchall()]
+            return authors
 
     def get_quote(
         self,
         quote_id: Optional[str] = None,
         author: Optional[str] = None,
-        method: Optional[str] = None
+        method: Optional[str] = None,
     ) -> Quote:
         """
         Fetches and returns a single quote as a Quote object.
@@ -111,34 +122,46 @@ class Quotes:
             raise ValueError("method must be 'gpt', 'db', 'gpt+fallback' or None.")
 
         if method in {"gpt", "gpt+fallback"} and not self.openai_enabled:
-            raise RuntimeError("OpenAI functionality is not enabled. Install the 'openai' package and provide an API key.")
+            raise RuntimeError(
+                "OpenAI functionality is not enabled. Install the 'openai' package and provide an API key."
+            )
 
         with self.connection as conn:
             cursor = conn.cursor()
 
             # Check if both quote_id and author are provided
             if quote_id and author:
-                logger.info("Author argument is ignored because a quote ID is provided.")
+                logger.info(
+                    "Author argument is ignored because a quote ID is provided."
+                )
 
             # If quote_id is provided, fetch the specific quote
             if quote_id:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM quotes
                     WHERE id = ?
-                """, (quote_id,))
+                """,
+                    (quote_id,),
+                )
             elif author:  # If author is provided, fetch a random quote by the author
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM quotes
                     WHERE author = ?
                     ORDER BY RANDOM()
                     LIMIT 1
-                """, (author,))
+                """,
+                    (author,),
+                )
             else:  # Fetch a completely random quote
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM quotes
                     ORDER BY RANDOM()
                     LIMIT 1
-                """)
+                """
+                )
 
             row = cursor.fetchone()
             if not row:
@@ -154,27 +177,37 @@ class Quotes:
             fallback = False
             # Handle interpretation
             if method == "gpt":
-                quote.interpretation = self._generate_interpretation(quote.text, quote.author)
+                quote.interpretation = self._generate_interpretation(
+                    quote.text, quote.author
+                )
             elif method == "gpt+fallback":
                 try:
-                    quote.interpretation = self._generate_interpretation(quote.text, quote.author)
+                    quote.interpretation = self._generate_interpretation(
+                        quote.text, quote.author
+                    )
                 except Exception as e:
-                    logger.debug("Error generating interpretation via GPT. Falling back to database.")
+                    logger.debug(
+                        "Error generating interpretation via GPT. Falling back to database."
+                    )
                     fallback = True
             elif method == "db" or fallback:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT interpretation FROM interpretations
                     WHERE quote_id = ?
                     ORDER BY RANDOM()
                     LIMIT 1
-                """, (row[0],))
+                """,
+                    (row[0],),
+                )
                 interpretation_row = cursor.fetchone()
                 if not interpretation_row:
-                    raise InterpretationNotFoundError(f"No interpretations found for quote ID {row[0]}.")
+                    raise InterpretationNotFoundError(
+                        f"No interpretations found for quote ID {row[0]}."
+                    )
                 quote.interpretation = interpretation_row[0]
 
             return quote
-
 
     def get_quotes(
         self,
@@ -209,7 +242,9 @@ class Quotes:
             raise ValueError("method must be 'gpt', 'db', 'gpt+fallback' or None.")
 
         if method in {"gpt", "gpt+fallback"} and not self.openai_enabled:
-            raise RuntimeError("OpenAI functionality is not enabled. Install the 'openai' package and provide an API key.")
+            raise RuntimeError(
+                "OpenAI functionality is not enabled. Install the 'openai' package and provide an API key."
+            )
 
         with self.connection as conn:
             main_cursor = conn.cursor()
@@ -235,12 +270,18 @@ class Quotes:
                 fallback = False
                 # Fetch interpretation if required
                 if method == "gpt":
-                    quote.interpretation = self._generate_interpretation(quote.text, quote.author)
+                    quote.interpretation = self._generate_interpretation(
+                        quote.text, quote.author
+                    )
                 elif method == "gpt+fallback":
                     try:
-                        quote.interpretation = self._generate_interpretation(quote.text, quote.author)
+                        quote.interpretation = self._generate_interpretation(
+                            quote.text, quote.author
+                        )
                     except Exception as e:
-                        logger.debug("Error generating interpretation via GPT. Falling back to database.")
+                        logger.debug(
+                            "Error generating interpretation via GPT. Falling back to database."
+                        )
                         fallback = True
                 elif method == "db" or fallback:
                     interpretation_cursor.execute(
@@ -254,7 +295,9 @@ class Quotes:
                     )
                     interpretation_row = interpretation_cursor.fetchone()
                     if not interpretation_row:
-                        raise InterpretationNotFoundError(f"No interpretations found for quote ID {row[0]}.")
+                        raise InterpretationNotFoundError(
+                            f"No interpretations found for quote ID {row[0]}."
+                        )
                     quote.interpretation = interpretation_row[0]
 
                 yield quote
@@ -266,17 +309,19 @@ class Quotes:
         if not self.openai_enabled:
             raise RuntimeError("OpenAI functionality is not enabled.")
 
-
         response = openai.Client().chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": """
+                {
+                    "role": "system",
+                    "content": """
                 I will provide a Stoic quote. Write a calm, thoughtful explanation of its underlying meaning, suitable for someone new to Stoic philosophy.
                 Present your response as a single cohesive paragraph, integrating contemporary scenarios to illustrate the idea in everyday life.
                 Begin directly with your interpretation—without using phrases like “this quote means...” or “the quote is saying...”
                 —and let the wording of the quote guide your explanation naturally.
                 Maintain an accessible, relatable tone that connects the ancient wisdom to modern circumstances.
-                """},
+                """,
+                },
                 {"role": "user", "content": f"{quote_text} - {author}"},
             ],
             temperature=1,
@@ -322,10 +367,14 @@ class Quotes:
 
         # Validate the interpretation argument
         if method not in {None, "gpt", "db", "db+fixed", "gpt+fallback"}:
-            raise ValueError("method must be 'gpt', 'db', 'db+fixed', 'gpt+fallback', or None.")
+            raise ValueError(
+                "method must be 'gpt', 'db', 'db+fixed', 'gpt+fallback', or None."
+            )
 
         if method in {"gpt", "gpt+fallback"} and not self.openai_enabled:
-            raise RuntimeError("OpenAI functionality is not enabled. Install the 'openai' package and provide an API key.")
+            raise RuntimeError(
+                "OpenAI functionality is not enabled. Install the 'openai' package and provide an API key."
+            )
 
         # Get the maximum ID from the database
         with self.connection as conn:
@@ -357,12 +406,18 @@ class Quotes:
 
         # Handle interpretation
         if method == "gpt":
-            quote.interpretation = self._generate_interpretation(quote.text, quote.author)
+            quote.interpretation = self._generate_interpretation(
+                quote.text, quote.author
+            )
         elif method == "gpt+fallback":
             try:
-                quote.interpretation = self._generate_interpretation(quote.text, quote.author)
+                quote.interpretation = self._generate_interpretation(
+                    quote.text, quote.author
+                )
             except Exception as e:
-                logger.debug("Error generating interpretation via GPT. Falling back to database.")
+                logger.debug(
+                    "Error generating interpretation via GPT. Falling back to database."
+                )
                 method = "db"  # Fall back to DB handling
 
         if method == "db":
@@ -379,7 +434,9 @@ class Quotes:
                 )
                 interpretation_row = cursor.fetchone()
                 if not interpretation_row:
-                    raise InterpretationNotFoundError(f"No interpretations found for quote ID {row[0]}.")
+                    raise InterpretationNotFoundError(
+                        f"No interpretations found for quote ID {row[0]}."
+                    )
                 quote.interpretation = interpretation_row[0]
         elif method == "db+fixed":
             # Deterministic database-based interpretation
@@ -393,14 +450,20 @@ class Quotes:
                 )
                 interpretation_rows = cursor.fetchall()
                 if not interpretation_rows:
-                    raise InterpretationNotFoundError(f"No interpretations found for quote ID {row[0]}.")
+                    raise InterpretationNotFoundError(
+                        f"No interpretations found for quote ID {row[0]}."
+                    )
 
                 # Use deterministic randomness for selection
-                random.seed(current_year + day_of_year)  # Ensure reproducibility for the current day
-                selected_interpretation = random.sample([row[0] for row in interpretation_rows], 1)[0]
+                random.seed(
+                    current_year + day_of_year
+                )  # Ensure reproducibility for the current day
+                selected_interpretation = random.sample(
+                    [row[0] for row in interpretation_rows], 1
+                )[0]
                 quote.interpretation = selected_interpretation
 
         return quote
 
-quotes = Quotes()
 
+quotes = Quotes()
