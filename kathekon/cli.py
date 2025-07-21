@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.text import Text
 from rich.panel import Panel
 from rich.align import Align
+from datetime import datetime
 
 quotes = Quotes()
 console = Console()
@@ -105,10 +106,12 @@ def update_readme(file_path, quote):
     if not path.exists():
         raise FileNotFoundError(f"The file {file_path} does not exist.")
     content = path.read_text()
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
     replacements = {
         "quote-text": quote.text,
         "quote-author": quote.author,
         "quote-interpretation": quote.interpretation or "",
+        "current-date": current_date,
     }
     for section, replacement in replacements.items():
         content = replace_section(content, section, replacement)
